@@ -1,0 +1,30 @@
+<form action="/create" method="POST">
+  <div class="mb-3">
+    <label for="title" class="form-label">Blog Title</label>
+    <input type="text" class="form-control" id="title" name="BlogTitle" required>
+  </div>
+                                                                                                                                                                                           
+  <div class="mb-3">
+    <label for="content" class="form-label">Content</label>
+    <textarea class="form-control" id="content" name="Content" rows="5" required></textarea>
+  </div>
+
+  <div class="mb-3">
+    <label for="author" class="form-label">Author</label>
+    <input type="text" class="form-control" id="author" name="author" required>
+  </div>
+
+  <!-- 🆕 Category Field -->
+  <div class="mb-3">
+    <label for="category" class="form-label">Category</label>
+    <select class="form-select" id="category" name="category">
+      <option selected>General</option>
+      <option>Tech</option>
+      <option>Life</option>
+      <option>Travel</option>
+      <option>Health</option>
+    </select>
+  </div>
+
+  <button type="submit" class="btn btn-success">Create Blog</button>
+</form>
