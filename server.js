@@ -154,7 +154,8 @@ app.post("/addBlog", async (req, res) => {
         const { BlogTitle, Content, author, category } = req.body;  // Capture category
         const newBlog = new Blog({ BlogTitle, Content, author, category });  // Save category
         await newBlog.save();
-        res.status(201).send({ message: "Blog added successfully", blog: newBlog });
+       res.redirect(`/blog/${newBlog._id}?success=true`);
+
     } catch (err) {
         res.status(500).send({ message: "Error adding blog", error: err });
     }
@@ -190,36 +191,49 @@ app.post("/comment/:id", async (req, res) => {
 });
 
 app.get("/allblogs", async (req, res) => {
-    const sortOrder = req.query.sortOrder || 'desc'; // Default to descending
-    const categoryFilter = req.query.category || 'all';  // Default to 'all' category
+    const sortOrder = req.query.sortOrder || 'desc'; // Default descending
+    const categoryFilter = req.query.category || 'all';  // Default all categories
 
-    const page = parseInt(req.query.page) || 1; // Current page
-    const limit = 5; // Number of blogs per page
+    const page = parseInt(req.query.page) || 1; 
+    const limit = 6; 
     const skip = (page - 1) * limit;
 
-    const sortCriteria = { likes: sortOrder === 'asc' ? 1 : -1 }; // Only sort by likes
+    const sortCriteria = { likes: sortOrder === 'asc' ? 1 : -1 };
 
-    const filter = categoryFilter !== 'all' ? { category: categoryFilter } : {}; // Filter by category if not 'all'
+    const filter = categoryFilter !== 'all' ? { category: categoryFilter } : {};
 
     try {
         const blogs = await Blog.find(filter).skip(skip).limit(limit).sort(sortCriteria);
-        const totalBlogs = await Blog.countDocuments();
+        const totalBlogs = await Blog.countDocuments(filter);
         const totalPages = Math.ceil(totalBlogs / limit);
 
-        res.render("allblogs", { blogs, page, totalPages, sortOrder, categoryFilter });
+        const pageTitle = categoryFilter === 'all' ? 'All Blogs' : categoryFilter + ' Blogs';
+
+        res.render("allblogs", { 
+            blogs, 
+            page, 
+            totalPages, 
+            sortOrder, 
+            category: categoryFilter,
+            pageTitle
+        });
     } catch (err) {
         res.status(500).send({ message: "Error fetching blogs", error: err });
     }
 });
+
         
     
 
 
-app.get("/getblog/:id", async (req, res) => {
+app.get("/blog/:id", async (req, res) => {
     try {
         const blog = await Blog.findById(req.params.id);
         if (!blog) return res.status(404).send({ message: "Blog not found" });
-        res.render("blog", blog.toObject());
+
+        const success = req.query.success === "true"; // check if blog was just added
+
+        res.render("blog", { ...blog.toObject(), success });
     } catch (err) {
         res.status(400).send({ message: "Invalid blog ID", error: err });
     }
@@ -247,14 +261,19 @@ app.patch("/updateblog/:id", async (req,res) => {
     res.send({ message: "Blog updated successfully", blog: updatedBlog });
 });
 app.get("/category/:category", async (req, res) => {
-    const category = req.params.category;
-    try {
-        const blogs = await Blog.find({ category: category });
-        res.render("allblogs", { blogs, category });
-    } catch (err) {
-        res.status(500).send({ message: "Error fetching blogs", error: err });
-    }
+  const category = req.params.category;
+  try {
+    const blogs = await Blog.find({ category: category });
+    res.render("allblogs", { 
+      blogs, 
+      category,
+      pageTitle: category + " Blogs"   // Yeh bhejo template ko
+    });
+  } catch (err) {
+    res.status(500).send({ message: "Error fetching blogs", error: err });
+  }
 });
+
 
 app.get("/search", async (req, res) => {
     const query = req.query.query;
@@ -282,7 +301,7 @@ app.get("/search", async (req, res) => {
 mongoose.connect("mongodb://127.0.0.1:27017/navyaBlogs")
     .then(() => {
         console.log("Connected to MongoDB!");
-        app.listen(5000, () => {
+        app.listen(4000, () => {
             console.log("Blog Server started Successfully on port 4000!");
         });
     })
